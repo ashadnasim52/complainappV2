@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -25,8 +26,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
 
 import static android.Manifest.permission.READ_PHONE_STATE;
 
@@ -34,7 +39,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     // Write a message to the database
     FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference databaseReference=database.getReference();
+    DatabaseReference userref=databaseReference.child("Users");
+    HashMap<String,String> hashMap=new HashMap<String, String>();
+
     EditText names,mobile,email,extra,complain;
+    TextView txt;
     CardView submity;
 
 
@@ -51,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         complain=findViewById(R.id.complain);
         extra=findViewById(R.id.extracontent);
         submity=findViewById(R.id.submit);
+        txt=findViewById(R.id.complainstatus);
 
         submity.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,15 +189,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (checkvalid())
         {
             //start working
-            DatabaseReference myRef = database.getReference(names.getText().toString());
+            hashMap.put("Name",names.getText().toString());
+            hashMap.put("email",email.getText().toString());
+            hashMap.put("phoneno",mobile.getText().toString());
+            hashMap.put("Complain",complain.getText().toString());
+            hashMap.put("extra",extra.getText().toString());
+            userref.push().setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    if (task.isSuccessful())
+                    {
+                        txt.setText("Complain Registered Sucessfully");
+                    }
+                    else
+                    {
+                        txt.setText("Complain was unable to Register");
 
-            myRef.setValue("1");
-            myRef.child("name").setValue(names.getText().toString());
-            myRef.child("phone no").setValue(mobile.getText().toString());
-            myRef.child("email id").setValue(email.getText().toString());
-            myRef.child("Complain").setValue(complain.getText().toString());
-            myRef.child("extra").setValue(extra.getText().toString());
-            Log.i("vaildity","yes");
+                    }
+                }
+            });
+
+
 
         }
         else
