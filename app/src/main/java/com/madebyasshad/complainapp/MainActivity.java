@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     DatabaseReference userref=databaseReference.child("Users");
     HashMap<String,String> hashMap=new HashMap<String, String>();
 
-    EditText names,mobile,email,extra,complain;
+    EditText names,mobile,email,extra,complain,complaintitle;
     TextView txt;
     CardView submity;
 
@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         extra=findViewById(R.id.extracontent);
         submity=findViewById(R.id.submit);
         txt=findViewById(R.id.complainstatus);
+        complaintitle=findViewById(R.id.Complaintitle);
 
         submity.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -179,6 +180,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         {
             extra.setText("null");
         }
+        else  if (complaintitle.getText().toString().equals(""))
+        {
+            Toast.makeText(getApplicationContext(),"Please Enter Your ComplainTitle",Toast.LENGTH_SHORT).show();
+            status=false;
+        }
         return status;
 
     }
@@ -194,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             hashMap.put("phoneno",mobile.getText().toString());
             hashMap.put("Complain",complain.getText().toString());
             hashMap.put("extra",extra.getText().toString());
+            hashMap.put("title",complaintitle.getText().toString());
             userref.push().setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
