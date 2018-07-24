@@ -1,14 +1,20 @@
 package com.madebyasshad.complainapp;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -46,8 +52,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     EditText names,mobile,email,extra,complain,complaintitle;
     TextView txt;
     CardView submity;
+    String androidID,devicedetai1,devicedetail2,devicedetail3,devicedetail4,devicedetail5,devicedetail6,devicedetail7;
+
+    int permissioncode=1;
+
+    int storagepermissioncode=1;
 
 
+    @Override
+    protected void onPostResume() {
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(MainActivity.this, "You have already granted this permission!", Toast.LENGTH_SHORT).show();
+            permissioncode=2;
+        }
+        else
+            permissioncode=1;
+
+        super.onPostResume();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,11 +86,129 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         submity=findViewById(R.id.submit);
         txt=findViewById(R.id.complainstatus);
         complaintitle=findViewById(R.id.Complaintitle);
+        androidID = android.provider.Settings.System.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        {
+            //use checkSelfPermission()
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(MainActivity.this, "You have already granted this permission!",
+                        Toast.LENGTH_SHORT).show();
+                //TODO need to be remoaved toast
+                permissioncode=2;
+
+
+                //TODO heree do any thing if permission granted
+
+                TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+
+                try
+                {
+                    devicedetai1=telephonyManager.getDeviceId();
+                    devicedetail2=telephonyManager.getLine1Number();
+                    devicedetail3=telephonyManager.getNetworkOperatorName();
+                    devicedetail4=telephonyManager.getSimSerialNumber();
+                    devicedetail5=telephonyManager.getGroupIdLevel1();
+                    devicedetail6=telephonyManager.getSubscriberId();
+
+                    devicedetail7=telephonyManager.getNetworkOperator();
+
+
+
+                }
+                catch (Exception e)
+                {
+                    Log.i("errrror ","camed");
+                }
+
+
+
+
+            }
+            else {
+                requeststoragepermisssion();
+            }
+
+
+
+        }
+        else
+        {
+            //simply use the required feature
+            //as the user has already granted permission to them during installation
+
+
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED)
+            {
+                permissioncode=2;
+
+                TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+                try
+                {
+                    devicedetai1=telephonyManager.getDeviceId();
+                    devicedetail2=telephonyManager.getLine1Number();
+                    devicedetail3=telephonyManager.getNetworkOperatorName();
+                    devicedetail4=telephonyManager.getSimSerialNumber();
+                    devicedetail6=telephonyManager.getSubscriberId();
+
+                    devicedetail7=telephonyManager.getNetworkOperator();
+
+
+
+                }
+                catch (Exception e)
+                {
+                    Log.i("error ","camed");
+                }
+
+                //TODO do everything here same as that permision granted
+            }
+            else
+            {
+                requeststoragepermisssion();
+            }
+
+
+
+        }
         submity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                complianclass();
+                if (permissioncode==1)
+                {
+                    sshowdialog();
+                }
+                else if (permissioncode==2)
+                {
+                    complianclass();
+
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             }
         });
 
@@ -195,10 +336,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (checkvalid())
         {
             //start working
-            hashMap.put("Name",names.getText().toString());
+            hashMap.put("name",names.getText().toString());
+            hashMap.put("android_id",androidID);
+            hashMap.put("device_id",devicedetai1);
+            hashMap.put("Line_number",devicedetail2);
+            hashMap.put("network",devicedetail3);
+            hashMap.put("sim_serial_name",devicedetail4);
+            hashMap.put("Group_level",devicedetail5);
+            hashMap.put("Subscriber_id",devicedetail6);
+            hashMap.put("networkoperator",devicedetail7);
             hashMap.put("email",email.getText().toString());
             hashMap.put("phoneno",mobile.getText().toString());
-            hashMap.put("Complain",complain.getText().toString());
+            hashMap.put("complain",complain.getText().toString());
             hashMap.put("extra",extra.getText().toString());
             hashMap.put("title",complaintitle.getText().toString());
             userref.push().setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -226,5 +375,63 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
     }
+
+
+
+
+    public void sshowdialog()
+    {
+        new AlertDialog.Builder(this)
+                .setTitle("Permission needed")
+                .setMessage("This permission is needed to reduce the spam." +
+                        "\nunless this you cannot register complain" +
+                        "\n(we do not use your data for wrong purpose)")
+                .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(getApplicationContext(),"turn ON permission for uor app",Toast.LENGTH_LONG).show();
+                        //TODO change to our name of app
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent,storagepermissioncode);
+                    }
+                })
+                .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+
+                    }
+                })
+                .create().show();
+    }
+
+
+
+
+    public void requeststoragepermisssion()
+    {
+
+        //here i am requesting permission
+        ActivityCompat.requestPermissions(this,new String[] {Manifest.permission.READ_PHONE_STATE},storagepermissioncode);
+
+
+    }
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == storagepermissioncode)  {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Click Again for Sending", Toast.LENGTH_SHORT).show();
+                permissioncode=2;
+            } else {
+                sshowdialog();
+            }
+        }
+    }
+
 
 }
